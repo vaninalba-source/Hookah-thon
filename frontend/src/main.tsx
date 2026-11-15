@@ -66,11 +66,11 @@ function App() {
   if (!ready) return <main className="loading"><span className="brand-mark"><Icon name="note" /></span><p role="status">Открываем ваши заметки…</p></main>;
   return <div className="app-shell">
     <header className="topbar">
-      <a className="brand" href="/" aria-label="Список задач — главная"><span className="brand-mark"><Icon name="note" /></span><span>Личный блокнот<span className="brand-caption">Место для ваших мыслей и дел</span></span></a>
+      <a className="brand" href="/" aria-label="Список задач — главная"><span className="brand-mark"><Icon name="note" /></span><span>Мои заметки<span className="brand-caption">Немного порядка в каждом дне</span></span></a>
       {user && <div className="account"><span className="account-email">{user.email}</span><button className="secondary logout" disabled={busy} onClick={() => void action(async () => { await api('/logout', 'POST'); setUser(null); setTodos([]); resetForm(); })}><Icon name="exit" />Выйти</button></div>}
     </header>
     <main className={user ? 'workspace' : 'auth-layout'}>
-      <div className="page-heading"><p className="eyebrow">ЗАМЕТКИ НА КАЖДЫЙ ДЕНЬ</p><h1>{user ? 'С чистого листа.' : mode === 'login' ? 'С возвращением.' : 'Начнём с чистого листа.'}</h1><p className="page-subtitle">{user ? 'Всё, что хочется сделать и не забыть.' : 'Войдите или создайте аккаунт, чтобы сохранить свои задачи.'}</p></div>
+      <div className="page-heading"><p className="eyebrow">ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО</p><h1>{user ? 'Всё важное — под рукой.' : mode === 'login' ? 'С возвращением.' : 'Начнём с чистого листа.'}</h1><p className="page-subtitle">{user ? 'Записывайте дела и двигайтесь в своём ритме.' : 'Войдите или создайте аккаунт, чтобы сохранить свои задачи.'}</p></div>
       {error && <div role="alert" className="error-message">{error}</div>}
       {!user ? <section className="panel auth-panel" aria-labelledby="auth-title">
         <div className="section-heading"><h2 id="auth-title">{mode === 'login' ? 'Вход' : 'Регистрация'}</h2><span className="heading-decoration" aria-hidden="true">✦</span></div>
@@ -82,14 +82,14 @@ function App() {
         <p className="auth-switch">{mode === 'login' ? 'Пока нет аккаунта? ' : 'Уже есть аккаунт? '}<button className="text-button" disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>{mode === 'login' ? 'Зарегистрироваться' : 'Войти'}</button></p>
       </section> : <div className="task-layout">
         <section className="panel composer" aria-labelledby="composer-title"><div className="section-heading"><h2 id="composer-title">{editing ? 'Редактирование' : 'Новая заметка'}</h2><span className="heading-icon"><Icon name={editing ? 'edit' : 'plus'} /></span></div>
-          <p className="section-description">{editing ? 'Измените нужное и сохраните.' : 'Оставьте здесь мысль, план или маленькое дело.'}</p>
+          <p className="section-description">{editing ? 'Измените нужное и сохраните.' : 'Большие планы начинаются с маленькой записи.'}</p>
           <form onSubmit={save} className="form-fields">
             <label>Заголовок<input value={title} onChange={e => setTitle(e.target.value)} required maxLength={200} disabled={busy} placeholder="Что хочется сделать?" /></label>
-            <label>Описание <span className="optional">· необязательно</span><textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={2000} rows={2} disabled={busy} placeholder="Детали, которые важно не забыть" /></label>
+            <label>Описание <span className="optional">· необязательно</span><textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={2000} rows={4} disabled={busy} placeholder="Детали, которые важно не забыть" /></label>
             <div className="form-actions"><button className="primary" disabled={busy || !title.trim()}><Icon name={editing ? 'edit' : 'plus'} />{busy ? 'Сохранение…' : editing ? 'Сохранить' : 'Добавить заметку'}</button>{editing && <button type="button" className="secondary" disabled={busy} onClick={resetForm}>Отмена</button>}</div>
           </form>
         </section>
-        <section className="task-section" aria-labelledby="list-title"><div className="list-heading"><h2 id="list-title">На страницах блокнота</h2><span className="list-line" aria-hidden="true" /></div>
+        <section className="task-section" aria-labelledby="list-title"><div className="list-heading"><h2 id="list-title">Мои задачи</h2><span className="list-line" aria-hidden="true" /></div>
           {todos.length === 0 ? <div className="empty-state"><span className="empty-icon"><Icon name="note" /></span><h3>Здесь будет ваш список</h3><p>Добавьте первую заметку.<br />Пусть важное остаётся под рукой.</p></div> : <ul className="task-list">{todos.map(todo => <li key={todo.id} className={`task-card${todo.completed ? ' is-complete' : ''}`}>
             <input className="todo-checkbox" type="checkbox" checked={todo.completed} disabled={busy} aria-label={`Выполнено: ${todo.title}`} onChange={() => void action(async () => { const updated = await api<Todo>(`/todos/${todo.id}`, 'PATCH', { completed: !todo.completed }); setTodos(items => items.map(item => item.id === updated.id ? updated : item)); })} />
             <div className="task-content"><h3 className="task-title">{todo.title}</h3>{todo.description && <p className="task-description">{todo.description}</p>}
@@ -100,7 +100,7 @@ function App() {
         </section>
       </div>}
     </main>
-    <footer className="app-footer">Записывайте важное. Остальное подождёт.</footer>
+    <footer className="app-footer">Для дел, мыслей и маленьких шагов.</footer>
   </div>;
 }
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
