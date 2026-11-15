@@ -10,7 +10,7 @@ class ApiError extends Error { constructor(public status: number, message: strin
 async function api<T>(path: string, method = 'GET', data?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, { method, credentials: 'same-origin', headers: data === undefined ? {} : { 'Content-Type': 'application/json' }, body: data === undefined ? undefined : JSON.stringify(data) });
   const value = await res.json();
-  if (!res.ok) throw new ApiError(res.status, value.error ?? 'Не удалось выполнить запрос.');
+  if (!res.ok) throw new ApiError(res.status, value.error ?? 'Не удалось выполнить запрос');
   return value as T;
 }
 function Icon({ name }: { name: 'note' | 'plus' | 'edit' | 'trash' | 'exit' | 'clock' }) {
@@ -37,7 +37,7 @@ function App() {
   const resetForm = () => { setTitle(''); setDescription(''); setEditing(null); };
   const handleError = (err: unknown) => {
     if (err instanceof ApiError && err.status === 401) { setUser(null); setTodos([]); resetForm(); }
-    setError(err instanceof ApiError ? err.message : 'Не удалось связаться с сервером. Попробуйте ещё раз.');
+    setError(err instanceof ApiError ? err.message : 'Не удалось связаться с сервером — Попробуйте ещё раз');
   };
   async function load() { setTodos(await api<Todo[]>('/todos')); }
   useEffect(() => { void (async () => {
@@ -63,34 +63,34 @@ function App() {
       resetForm();
     });
   }
-  if (!ready) return <main className="loading"><span className="brand-mark"><Icon name="note" /></span><p role="status">Открываем ваши заметки…</p></main>;
+  if (!ready) return <main className="loading"><span className="brand-mark"><Icon name="note" /></span><p role="status">Открываем ваши заметки</p></main>;
   return <div className="app-shell">
     <header className="topbar">
       <a className="brand" href="/" aria-label="Список задач — главная"><span className="brand-mark"><Icon name="note" /></span><span>Мои заметки<span className="brand-caption">Немного порядка в каждом дне</span></span></a>
       {user && <div className="account"><span className="account-email">{user.email}</span><button className="secondary logout" disabled={busy} onClick={() => void action(async () => { await api('/logout', 'POST'); setUser(null); setTodos([]); resetForm(); })}><Icon name="exit" />Выйти</button></div>}
     </header>
     <main className={user ? 'workspace' : 'auth-layout'}>
-      <div className="page-heading"><p className="eyebrow">ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО</p><h1>{user ? 'Выгрузи дела из головы' : mode === 'login' ? 'С возвращением.' : 'Начнём с чистого листа.'}</h1><p className="page-subtitle">{user ? 'Вноси задачи, выполняй и вычеркивай с удовольствием' : 'Войдите или создайте аккаунт, чтобы сохранить свои задачи.'}</p></div>
+      <div className="page-heading"><p className="eyebrow">ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО</p><h1>{user ? 'Выгрузи дела из головы' : mode === 'login' ? 'С возвращением!' : 'Начнём с чистого листа'}</h1><p className="page-subtitle">{user ? 'Вноси задачи, выполняй и вычеркивай с удовольствием' : 'Войдите или создайте аккаунт, чтобы сохранить свои задачи'}</p></div>
       {error && <div role="alert" className="error-message">{error}</div>}
       {!user ? <section className="panel auth-panel" aria-labelledby="auth-title">
         <div className="section-heading"><h2 id="auth-title">{mode === 'login' ? 'Вход' : 'Регистрация'}</h2><span className="heading-decoration" aria-hidden="true">✦</span></div>
         <form onSubmit={auth} className="form-fields">
           <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} disabled={busy} /></label>
           <label>Пароль<input name="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} maxLength={128} required disabled={busy} placeholder="Введите пароль" /><span className="field-hint">От 8 до 128 символов</span></label>
-          <button className="primary full-width" disabled={busy}>{busy ? 'Подождите…' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}</button>
+          <button className="primary full-width" disabled={busy}>{busy ? 'Подождите' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}</button>
         </form>
         <p className="auth-switch">{mode === 'login' ? 'Пока нет аккаунта? ' : 'Уже есть аккаунт? '}<button className="text-button" disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>{mode === 'login' ? 'Зарегистрироваться' : 'Войти'}</button></p>
       </section> : <div className="task-layout">
         <section className="panel composer" aria-labelledby="composer-title"><div className="section-heading"><h2 id="composer-title">{editing ? 'Редактирование' : 'Новая заметка'}</h2><span className="heading-icon"><Icon name={editing ? 'edit' : 'plus'} /></span></div>
-          <p className="section-description">{editing ? 'Измените нужное и сохраните.' : 'Большие планы начинаются с маленькой записи.'}</p>
+          <p className="section-description">{editing ? 'Измените нужное и сохраните' : 'Большие планы начинаются с маленькой записи'}</p>
           <form onSubmit={save} className="form-fields">
             <label>Заголовок<input value={title} onChange={e => setTitle(e.target.value)} required maxLength={200} disabled={busy} placeholder="Что хочется сделать?" /></label>
             <label>Описание <span className="optional">· необязательно</span><textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={2000} rows={4} disabled={busy} placeholder="Детали, которые важно не забыть" /></label>
-            <div className="form-actions"><button className="primary" disabled={busy || !title.trim()}><Icon name={editing ? 'edit' : 'plus'} />{busy ? 'Сохранение…' : editing ? 'Сохранить' : 'Добавить заметку'}</button>{editing && <button type="button" className="secondary" disabled={busy} onClick={resetForm}>Отмена</button>}</div>
+            <div className="form-actions"><button className="primary" disabled={busy || !title.trim()}><Icon name={editing ? 'edit' : 'plus'} />{busy ? 'Сохранение' : editing ? 'Сохранить' : 'Добавить заметку'}</button>{editing && <button type="button" className="secondary" disabled={busy} onClick={resetForm}>Отмена</button>}</div>
           </form>
         </section>
         <section className="task-section" aria-labelledby="list-title"><div className="list-heading"><h2 id="list-title">Мои задачи</h2><span className="list-line" aria-hidden="true" /></div>
-          {todos.length === 0 ? <div className="empty-state"><span className="empty-icon"><Icon name="note" /></span><h3>Здесь будет ваш список</h3><p>Добавьте первую заметку.<br />Пусть важное остаётся под рукой.</p></div> : <ul className="task-list">{todos.map(todo => <li key={todo.id} className={`task-card${todo.completed ? ' is-complete' : ''}`}>
+          {todos.length === 0 ? <div className="empty-state"><span className="empty-icon"><Icon name="note" /></span><h3>Здесь будет ваш список</h3><p>Добавьте первую заметку<br />Пусть важное остаётся под рукой</p></div> : <ul className="task-list">{todos.map(todo => <li key={todo.id} className={`task-card${todo.completed ? ' is-complete' : ''}`}>
             <input className="todo-checkbox" type="checkbox" checked={todo.completed} disabled={busy} aria-label={`Выполнено: ${todo.title}`} onChange={() => void action(async () => { const updated = await api<Todo>(`/todos/${todo.id}`, 'PATCH', { completed: !todo.completed }); setTodos(items => items.map(item => item.id === updated.id ? updated : item)); })} />
             <div className="task-content"><h3 className="task-title">{todo.title}</h3>{todo.description && <p className="task-description">{todo.description}</p>}
               <p className="task-date"><Icon name="clock" />{todo.createdAt ? <><span>Создано: <time dateTime={todo.createdAt}>{createdAtFormat.format(new Date(todo.createdAt))}</time></span></> : <span>Дата создания неизвестна</span>}</p>
@@ -100,7 +100,7 @@ function App() {
         </section>
       </div>}
     </main>
-    <footer className="app-footer">Для дел, мыслей и маленьких шагов.</footer>
+    <footer className="app-footer">Для дел, мыслей и маленьких шагов</footer>
   </div>;
 }
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
