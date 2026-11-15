@@ -70,7 +70,7 @@ function App() {
       {user && <div className="account"><span className="account-email">{user.email}</span><button className="secondary logout" disabled={busy} onClick={() => void action(async () => { await api('/logout', 'POST'); setUser(null); setTodos([]); resetForm(); })}><Icon name="exit" />Выйти</button></div>}
     </header>
     <main className={user ? 'workspace' : 'auth-layout'}>
-      <div className="page-heading"><p className="eyebrow">ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО</p><h1>{user ? 'Выгрузи дела из головы' : mode === 'login' ? 'С возвращением.' : 'Начнём с чистого листа.'}</h1><p className="page-subtitle">{user ? 'Записывайте дела и двигайтесь в своём ритме.' : 'Войдите или создайте аккаунт, чтобы сохранить свои задачи.'}</p></div>
+      <div className="page-heading"><p className="eyebrow">ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО</p><h1>{user ? 'Выгрузи дела из головы' : mode === 'login' ? 'С возвращением.' : 'Начнём с чистого листа.'}</h1><p className="page-subtitle">{user ? 'Вноси задачи, выполняй и вычеркивай с удовольствием' : 'Войдите или создайте аккаунт, чтобы сохранить свои задачи.'}</p></div>
       {error && <div role="alert" className="error-message">{error}</div>}
       {!user ? <section className="panel auth-panel" aria-labelledby="auth-title">
         <div className="section-heading"><h2 id="auth-title">{mode === 'login' ? 'Вход' : 'Регистрация'}</h2><span className="heading-decoration" aria-hidden="true">✦</span></div>
