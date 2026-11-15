@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: hookah-thon-todo
+    runtime: node
+    plan: free
+    buildCommand: npm ci --prefix frontend && npm run build --prefix frontend && npm ci --prefix backend && npm run db:generate --prefix backend && npm run build --prefix backend
+    startCommand: cd backend && npm run db:deploy && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: NODE_ENV
+        value: production
+      - key: STATIC_DIR
+        value: ../frontend/dist
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hookah-thon-db
+          property: connectionString
+
+databases:
+  - name: hookah-thon-db
+    plan: free
+    databaseName: todo
+    user: todo

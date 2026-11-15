@@ -1,12 +1,15 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomBytes, scrypt, timingSafeEqual, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 const derive = promisify(scrypt);
-const origin = process.env.APP_ORIGIN ?? 'http://localhost:5173';
+const origin = process.env.APP_ORIGIN ?? process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:5173';
+const staticDir = process.env.STATIC_DIR ? resolve(process.env.STATIC_DIR) : null;
 const secure = new URL(origin).protocol === 'https:';
 const cookieName = 'todo_session';
 const lifetime = 7 * 24 * 60 * 60;
@@ -101,6 +104,22 @@ const server = createServer(async (req, res) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname;
     const method = req.method ?? 'GET';
     if (!['GET', 'HEAD'].includes(method) && req.headers.origin && req.headers.origin !== origin) throw new HttpError(403, 'Недопустимый источник запроса.');
+    if (staticDir && (method === 'GET' || method === 'HEAD') && (path === '/' || /^\/assets\/[a-zA-Z0-9_.-]+\.(js|css)$/.test(path))) {
+      const file = path === '/' ? '/index.html' : path;
+      try {
+        const content = await readFile(resolve(staticDir, '.' + file));
+        res.writeHead(200, {
+          'Content-Type': file.endsWith('.js') ? 'text/javascript; charset=utf-8' : file.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/html; charset=utf-8',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+          'Cache-Control': path === '/' ? 'no-cache' : 'public, max-age=31536000, immutable',
+        });
+        res.end(method === 'HEAD' ? undefined : content); return;
+      } catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') throw new HttpError(404, 'Файл не найден.');
+        throw error;
+      }
+    }
     if (path === '/api/health' && method === 'GET') { await db.$queryRaw`SELECT 1`; send(res, 200, { ok: true }); return; }
     if (['/api/register', '/api/login'].includes(path) && method === 'POST') {
       limit(req);
