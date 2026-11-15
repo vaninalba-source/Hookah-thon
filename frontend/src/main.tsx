@@ -13,6 +13,17 @@ async function api<T>(path: string, method = 'GET', data?: unknown): Promise<T> 
   if (!res.ok) throw new ApiError(res.status, value.error ?? 'Не удалось выполнить запрос.');
   return value as T;
 }
+function Icon({ name }: { name: 'note' | 'plus' | 'edit' | 'trash' | 'exit' | 'clock' }) {
+  const paths = {
+    note: <><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3" /><path d="m10 14 1-4L18 3a2.12 2.12 0 0 1 3 3l-7 7-4 1Z" /><path d="m16 5 3 3" /></>,
+    plus: <><path d="M12 5v14M5 12h14" /></>,
+    edit: <><path d="m4 16-1 5 5-1L20 8a2.12 2.12 0 0 0-4-4L4 16Z" /><path d="m14 6 4 4" /></>,
+    trash: <><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></>,
+    exit: <><path d="M9 4H4v16h5M9 12h12m-4-4 4 4-4 4" /></>,
+    clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  };
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
+}
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
@@ -52,38 +63,44 @@ function App() {
       resetForm();
     });
   }
-  if (!ready) return <main className="mx-auto max-w-2xl px-5 py-16"><p role="status">Загрузка…</p></main>;
-  return <main className="mx-auto max-w-2xl px-5 py-10 sm:py-16">
-    <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
-      <div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Todo List</p><h1 className="text-3xl font-semibold tracking-tight">{user ? 'Мои задачи' : mode === 'login' ? 'Вход' : 'Регистрация'}</h1>
-      <p className="mt-2 break-all text-sm text-slate-500">{user ? user.email : 'Ваши задачи — в одном месте.'}</p></div>
-      {user && <button className="secondary" disabled={busy} onClick={() => void action(async () => { await api('/logout', 'POST'); setUser(null); setTodos([]); resetForm(); })}>Выйти</button>}
+  if (!ready) return <main className="loading"><span className="brand-mark"><Icon name="note" /></span><p role="status">Открываем ваши заметки…</p></main>;
+  return <div className="app-shell">
+    <header className="topbar">
+      <a className="brand" href="/" aria-label="Список задач — главная"><span className="brand-mark"><Icon name="note" /></span><span>Мои заметки<span className="brand-caption">Немного порядка в каждом дне</span></span></a>
+      {user && <div className="account"><span className="account-email">{user.email}</span><button className="secondary logout" disabled={busy} onClick={() => void action(async () => { await api('/logout', 'POST'); setUser(null); setTodos([]); resetForm(); })}><Icon name="exit" />Выйти</button></div>}
     </header>
-    {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>}
-    {!user ? <section className="panel">
-      <form onSubmit={auth} className="space-y-5">
-        <label>Email<input name="email" type="email" autoComplete="email" required maxLength={254} disabled={busy} /></label>
-        <label>Пароль<input name="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} maxLength={128} required disabled={busy} /><span className="mt-1 block text-xs font-normal text-slate-500">От 8 до 128 символов</span></label>
-        <button className="primary w-full" disabled={busy}>{busy ? 'Подождите…' : mode === 'login' ? 'Войти' : 'Зарегистрироваться'}</button>
-      </form>
-      <p className="mt-6 text-center text-sm text-slate-500">{mode === 'login' ? 'Нет аккаунта? ' : 'Уже есть аккаунт? '}<button className="text-emerald-700 underline underline-offset-4" disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>{mode === 'login' ? 'Регистрация' : 'Войти'}</button></p>
-    </section> : <>
-      <section className="panel mb-7"><h2 className="mb-4 text-lg font-semibold">{editing ? 'Редактировать задачу' : 'Новая задача'}</h2>
-        <form onSubmit={save} className="space-y-4">
-          <label>Заголовок<input value={title} onChange={e => setTitle(e.target.value)} required maxLength={200} disabled={busy} placeholder="Что нужно сделать?" /></label>
-          <label>Описание <span className="font-normal text-slate-400">(необязательно)</span><textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={2000} rows={3} disabled={busy} /></label>
-          <div className="flex flex-wrap gap-2"><button className="primary" disabled={busy || !title.trim()}>{busy ? 'Сохранение…' : editing ? 'Сохранить' : 'Добавить задачу'}</button>{editing && <button type="button" className="secondary" disabled={busy} onClick={resetForm}>Отмена</button>}</div>
+    <main className={user ? 'workspace' : 'auth-layout'}>
+      <div className="page-heading"><p className="eyebrow">ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО</p><h1>{user ? 'Всё важное — под рукой.' : mode === 'login' ? 'С возвращением.' : 'Начнём с чистого листа.'}</h1><p className="page-subtitle">{user ? 'Записывайте дела и двигайтесь в своём ритме.' : 'Войдите или создайте аккаунт, чтобы сохранить свои задачи.'}</p></div>
+      {error && <div role="alert" className="error-message">{error}</div>}
+      {!user ? <section className="panel auth-panel" aria-labelledby="auth-title">
+        <div className="section-heading"><h2 id="auth-title">{mode === 'login' ? 'Вход' : 'Регистрация'}</h2><span className="heading-decoration" aria-hidden="true">✦</span></div>
+        <form onSubmit={auth} className="form-fields">
+          <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} disabled={busy} /></label>
+          <label>Пароль<input name="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={8} maxLength={128} required disabled={busy} placeholder="Введите пароль" /><span className="field-hint">От 8 до 128 символов</span></label>
+          <button className="primary full-width" disabled={busy}>{busy ? 'Подождите…' : mode === 'login' ? 'Войти' : 'Создать аккаунт'}</button>
         </form>
-      </section>
-      <section aria-label="Задачи"><h2 className="mb-3 text-lg font-semibold">Список задач</h2>
-        {todos.length === 0 ? <p className="rounded-2xl border border-dashed border-slate-300 px-6 py-10 text-center text-sm text-slate-500">Пока нет задач. Добавьте первую выше.</p> : <ul className="space-y-3">{todos.map(todo => <li key={todo.id} className="panel flex items-start gap-3 !p-5">
-          <input className="mt-1 !h-5 !w-5 shrink-0 accent-emerald-700" type="checkbox" checked={todo.completed} disabled={busy} aria-label={`Выполнено: ${todo.title}`} onChange={() => void action(async () => { const updated = await api<Todo>(`/todos/${todo.id}`, 'PATCH', { completed: !todo.completed }); setTodos(items => items.map(item => item.id === updated.id ? updated : item)); })} />
-          <div className="min-w-0 flex-1"><h3 className={`break-words font-medium ${todo.completed ? 'text-slate-400 line-through' : ''}`}>{todo.title}</h3>{todo.description && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-500">{todo.description}</p>}
-          <p className="mt-2 text-xs text-slate-400">{todo.createdAt ? <>Создано: <time dateTime={todo.createdAt}>{createdAtFormat.format(new Date(todo.createdAt))}</time></> : 'Дата создания неизвестна'}</p>
-          <div className="mt-3 flex flex-wrap gap-4 text-sm"><button className="text-emerald-700 hover:underline" disabled={busy} onClick={() => { setEditing(todo.id); setTitle(todo.title); setDescription(todo.description); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Изменить</button><button className="text-red-700 hover:underline" disabled={busy} onClick={() => void action(async () => { await api(`/todos/${todo.id}`, 'DELETE'); setTodos(items => items.filter(item => item.id !== todo.id)); if (editing === todo.id) resetForm(); })}>Удалить</button></div></div>
-        </li>)}</ul>}
-      </section>
-    </>}
-  </main>;
+        <p className="auth-switch">{mode === 'login' ? 'Пока нет аккаунта? ' : 'Уже есть аккаунт? '}<button className="text-button" disabled={busy} onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>{mode === 'login' ? 'Зарегистрироваться' : 'Войти'}</button></p>
+      </section> : <div className="task-layout">
+        <section className="panel composer" aria-labelledby="composer-title"><div className="section-heading"><h2 id="composer-title">{editing ? 'Редактирование' : 'Новая заметка'}</h2><span className="heading-icon"><Icon name={editing ? 'edit' : 'plus'} /></span></div>
+          <p className="section-description">{editing ? 'Измените нужное и сохраните.' : 'Большие планы начинаются с маленькой записи.'}</p>
+          <form onSubmit={save} className="form-fields">
+            <label>Заголовок<input value={title} onChange={e => setTitle(e.target.value)} required maxLength={200} disabled={busy} placeholder="Что хочется сделать?" /></label>
+            <label>Описание <span className="optional">· необязательно</span><textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={2000} rows={4} disabled={busy} placeholder="Детали, которые важно не забыть" /></label>
+            <div className="form-actions"><button className="primary" disabled={busy || !title.trim()}><Icon name={editing ? 'edit' : 'plus'} />{busy ? 'Сохранение…' : editing ? 'Сохранить' : 'Добавить заметку'}</button>{editing && <button type="button" className="secondary" disabled={busy} onClick={resetForm}>Отмена</button>}</div>
+          </form>
+        </section>
+        <section className="task-section" aria-labelledby="list-title"><div className="list-heading"><h2 id="list-title">Мои задачи</h2><span className="list-line" aria-hidden="true" /></div>
+          {todos.length === 0 ? <div className="empty-state"><span className="empty-icon"><Icon name="note" /></span><h3>Здесь будет ваш список</h3><p>Добавьте первую заметку.<br />Пусть важное остаётся под рукой.</p></div> : <ul className="task-list">{todos.map(todo => <li key={todo.id} className={`task-card${todo.completed ? ' is-complete' : ''}`}>
+            <input className="todo-checkbox" type="checkbox" checked={todo.completed} disabled={busy} aria-label={`Выполнено: ${todo.title}`} onChange={() => void action(async () => { const updated = await api<Todo>(`/todos/${todo.id}`, 'PATCH', { completed: !todo.completed }); setTodos(items => items.map(item => item.id === updated.id ? updated : item)); })} />
+            <div className="task-content"><h3 className="task-title">{todo.title}</h3>{todo.description && <p className="task-description">{todo.description}</p>}
+              <p className="task-date"><Icon name="clock" />{todo.createdAt ? <><span>Создано: <time dateTime={todo.createdAt}>{createdAtFormat.format(new Date(todo.createdAt))}</time></span></> : <span>Дата создания неизвестна</span>}</p>
+              <div className="task-actions"><button className="task-action" disabled={busy} onClick={() => { setEditing(todo.id); setTitle(todo.title); setDescription(todo.description); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Icon name="edit" />Изменить</button><button className="task-action delete-action" disabled={busy} onClick={() => void action(async () => { await api(`/todos/${todo.id}`, 'DELETE'); setTodos(items => items.filter(item => item.id !== todo.id)); if (editing === todo.id) resetForm(); })}><Icon name="trash" />Удалить</button></div>
+            </div>
+          </li>)}</ul>}
+        </section>
+      </div>}
+    </main>
+    <footer className="app-footer">Для дел, мыслей и маленьких шагов.</footer>
+  </div>;
 }
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
