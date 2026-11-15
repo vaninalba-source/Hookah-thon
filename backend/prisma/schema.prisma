@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String
+  todos        Todo[]
+  sessions     Session[]
+}
+model Todo {
+  id          String  @id @default(uuid()) @db.Uuid
+  title       String
+  description String  @default("")
+  completed   Boolean @default(false)
+  userId      String  @db.Uuid
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+model Session {
+  tokenHash String   @id
+  userId    String   @db.Uuid
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@index([expiresAt])
+}

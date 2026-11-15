@@ -1,0 +1,26 @@
+{
+  "name": "todo-list-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:generate": "prisma generate",
+    "db:deploy": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "7.10.1",
+    "@prisma/adapter-pg": "7.10.1"
+  },
+  "devDependencies": {
+    "prisma": "7.10.1",
+    "typescript": "~5.9.3",
+    "tsx": "^4.20.6",
+    "@types/node": "^24.0.0"
+  }
+}
