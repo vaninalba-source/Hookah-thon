@@ -16,6 +16,7 @@ model Todo {
   title       String
   description String  @default("")
   completed   Boolean @default(false)
+  createdAt   DateTime? @default(now()) @db.Timestamptz(3)
   userId      String  @db.Uuid
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId])

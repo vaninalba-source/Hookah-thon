@@ -2,7 +2,10 @@ import { StrictMode, useEffect, useState, type FormEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 type User = { id: string; email: string };
-type Todo = { id: string; title: string; description: string; completed: boolean };
+type Todo = { id: string; title: string; description: string; completed: boolean; createdAt: string | null };
+const createdAtFormat = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+});
 class ApiError extends Error { constructor(public status: number, message: string) { super(message); } }
 async function api<T>(path: string, method = 'GET', data?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, { method, credentials: 'same-origin', headers: data === undefined ? {} : { 'Content-Type': 'application/json' }, body: data === undefined ? undefined : JSON.stringify(data) });
@@ -76,6 +79,7 @@ function App() {
         {todos.length === 0 ? <p className="rounded-2xl border border-dashed border-slate-300 px-6 py-10 text-center text-sm text-slate-500">Пока нет задач. Добавьте первую выше.</p> : <ul className="space-y-3">{todos.map(todo => <li key={todo.id} className="panel flex items-start gap-3 !p-5">
           <input className="mt-1 !h-5 !w-5 shrink-0 accent-emerald-700" type="checkbox" checked={todo.completed} disabled={busy} aria-label={`Выполнено: ${todo.title}`} onChange={() => void action(async () => { const updated = await api<Todo>(`/todos/${todo.id}`, 'PATCH', { completed: !todo.completed }); setTodos(items => items.map(item => item.id === updated.id ? updated : item)); })} />
           <div className="min-w-0 flex-1"><h3 className={`break-words font-medium ${todo.completed ? 'text-slate-400 line-through' : ''}`}>{todo.title}</h3>{todo.description && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-500">{todo.description}</p>}
+          <p className="mt-2 text-xs text-slate-400">{todo.createdAt ? <>Создано: <time dateTime={todo.createdAt}>{createdAtFormat.format(new Date(todo.createdAt))}</time></> : 'Дата создания неизвестна'}</p>
           <div className="mt-3 flex flex-wrap gap-4 text-sm"><button className="text-emerald-700 hover:underline" disabled={busy} onClick={() => { setEditing(todo.id); setTitle(todo.title); setDescription(todo.description); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Изменить</button><button className="text-red-700 hover:underline" disabled={busy} onClick={() => void action(async () => { await api(`/todos/${todo.id}`, 'DELETE'); setTodos(items => items.filter(item => item.id !== todo.id)); if (editing === todo.id) resetForm(); })}>Удалить</button></div></div>
         </li>)}</ul>}
       </section>
